@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Hàng Tạp Hóa</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        button {
+            margin: 5px;
+        }
+        img {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quản Lý Hàng Tạp Hóa</h1>
+    
+    <div>
+        <h2>Thêm/Sửa Mặt Hàng</h2>
+        <input type="text" id="ten" placeholder="Tên mặt hàng">
+        <input type="number" id="soLuong" placeholder="Số lượng">
+        <input type="number" id="gia" placeholder="Giá (VNĐ)">
+        <input type="file" id="hinh" accept="image/*">
+        <button onclick="themHang()">Thêm</button>
+        <button onclick="capNhatHang()" id="btnCapNhat" style="display:none;">Cập Nhật</button>
+    </div>
+
+    <h2>Danh Sách Mặt Hàng</h2>
+    <table id="tableHang">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Số Lượng</th>
+                <th>Giá (VNĐ)</th>
+                <th>Hình Ảnh</th>
+                <th>Thao Tác</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <h3>Tổng Giá Trị Hàng Tồn Kho: <span id="tongGiaTri">0</span> VNĐ</h3>
+
+    <script >// app.js
+
+        let hangHoa = [];
+        let hangCanCapNhat = null;
+        
+        function themHang() {
+            const ten = document.getElementById('ten').value;
+            const soLuong = parseInt(document.getElementById('soLuong').value);
+            const gia = parseInt(document.getElementById('gia').value);
+            const hinh = document.getElementById('hinh').files[0];
+        
+            if (!ten || isNaN(soLuong) || isNaN(gia) || !hinh) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+        
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const hang = { ten, soLuong, gia, hinh: event.target.result };
+                hangHoa.push(hang);
+                hienThiHangHoa();
+                tinhTongGiaTri();
+                resetForm();
+            };
+            reader.readAsDataURL(hinh);
+        }
+        
+        function hienThiHangHoa() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+        
+            hangHoa.forEach((hang, index) => {
+                const row = `
+                    <tr>
+                        <td>${hang.ten}</td>
+                        <td>${hang.soLuong}</td>
+                        <td>${hang.gia}</td>
+                        <td><img src="${hang.hinh}" alt="${hang.ten}"></td>
+                        <td>
+                            <button onclick="chinhSuaHang(${index})">Sửa</button>
+                            <button onclick="xoaHang(${index})">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+        
+        function xoaHang(index) {
+            hangHoa.splice(index, 1);
+            hienThiHangHoa();
+            tinhTongGiaTri();
+        }
+        
+        function chinhSuaHang(index) {
+            hangCanCapNhat = index;
+            const hang = hangHoa[index];
+            document.getElementById('ten').value = hang.ten;
+            document.getElementById('soLuong').value = hang.soLuong;
+            document.getElementById('gia').value = hang.gia;
+            document.getElementById('btnCapNhat').style.display = 'inline-block';
+        
+            // Để chọn hình ảnh, không thể tự động hiện hình đã chọn
+        }
+        
+        function capNhatHang() {
+            const ten = document.getElementById('ten').value;
+            const soLuong = parseInt(document.getElementById('soLuong').value);
+            const gia = parseInt(document.getElementById('gia').value);
+            const hinh = document.getElementById('hinh').files[0];
+        
+            if (!ten || isNaN(soLuong) || isNaN(gia)) {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+        
+            const hang = { ten, soLuong, gia, hinh: hangHoa[hangCanCapNhat].hinh };
+            if (hinh) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    hang.hinh = event.target.result;
+                    hangHoa[hangCanCapNhat] = hang;
+                    hienThiHangHoa();
+                    tinhTongGiaTri();
+                    resetForm();
+                };
+                reader.readAsDataURL(hinh);
+            } else {
+                hangHoa[hangCanCapNhat] = hang;
+                hienThiHangHoa();
+                tinhTongGiaTri();
+                resetForm();
+            }
+        }
+        
+        function resetForm() {
+            document.getElementById('ten').value = '';
+            document.getElementById('soLuong').value = '';
+            document.getElementById('gia').value = '';
+            document.getElementById('hinh').value = '';
+            document.getElementById('btnCapNhat').style.display = 'none';
+        }
+        
+        function tinhTongGiaTri() {
+            const tong = hangHoa.reduce((sum, hang) => sum + (hang.soLuong * hang.gia), 0);
+            document.getElementById('tongGiaTri').innerText = tong;
+        }
+        </script>
+</body>
+</html>
